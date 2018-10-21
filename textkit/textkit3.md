@@ -89,3 +89,15 @@ textContainer:self.textContainer];
 
 也可以选用多个 layout manager 来实现需求
 ![ Object configuration for multiple views of the same text](./images/image17.png)
+
+参考 Demo   
+1.  [https://github.com/thierryxing/swift-textkit-demo](https://github.com/thierryxing/swift-textkit-demo)   
+2. [https://github.com/objcio/issue-5-textkit](https://github.com/objcio/issue-5-textkit)
+
+参考资料
+
+1. 
+[https://developer.apple.com/library/archive/documentation/StringsTextFonts/Conceptual/TextAndWebiPhoneOS/CustomTextProcessing/CustomTextProcessing.html](https://developer.apple.com/library/archive/documentation/StringsTextFonts/Conceptual/TextAndWebiPhoneOS/CustomTextProcessing/CustomTextProcessing.html)
+2. 
+[https://objccn.io/issue-5-1/](https://objccn.io/issue-5-1/)
+3. [TextKit Best Practices](https://developer.apple.com/videos/play/wwdc2018/221/)
