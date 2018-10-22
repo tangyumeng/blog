@@ -63,7 +63,6 @@ layout manager 职责：
 
 
 ####  text container(NSTextContainer)
-
 1. 指定排除路线  
 ![textcontainer](./images/image13.png)
 `@property (copy, NS_NONATOMIC_IOSONLY) NSArray<UIBezierPath *> *exclusionPaths`
@@ -89,6 +88,9 @@ textContainer:self.textContainer];
 
 也可以选用多个 layout manager 来实现需求
 ![ Object configuration for multiple views of the same text](./images/image17.png)
+
+更复杂的 text container 可以参考
+[https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/TextStorageLayer/Tasks/Region.html#//apple_ref/doc/uid/20000925-CJBBIAAF](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/TextStorageLayer/Tasks/Region.html#//apple_ref/doc/uid/20000925-CJBBIAAF)
 
 参考 Demo   
 1.  [https://github.com/thierryxing/swift-textkit-demo](https://github.com/thierryxing/swift-textkit-demo)   
