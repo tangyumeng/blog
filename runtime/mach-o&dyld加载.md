@@ -106,8 +106,8 @@ exec_mach_imgact(struct image_params *imgp){
 		imgp->ip_origcputype = mach_header->cputype;
 		imgp->ip_origcpusubtype = mach_header->cpusubtype;
 	}
-	
-	
+
+​	
 	...
 
 
@@ -116,7 +116,7 @@ exec_mach_imgact(struct image_params *imgp){
 	thread = imgp->ip_new_thread;
 	uthread = get_bsdthread_info(thread);
 	task = new_task = get_threadtask(thread);
-
+	
 	/*
 	 *	Load the Mach-O file.
 	 *
@@ -128,21 +128,21 @@ exec_mach_imgact(struct image_params *imgp){
 	 * this is not the case, and "too late" is still not too late to
 	 * return an error code to the parent process.
 	 */
-
+	
 	/*
 	 * Actually load the image file we previously decided to load.
 	 */
 	// 加载Mach-O文件，如果返回LOAD_SUCCESS,binary已经映射成可执行内存
 	lret = load_machfile(imgp, mach_header, thread, &map, &load_result);
 	... //删去错误判断、方便看主流程
-
+	
 	proc_lock(p);
 	p->p_cputype = imgp->ip_origcputype;
 	p->p_cpusubtype = imgp->ip_origcpusubtype;
 	proc_unlock(p);
-
+	
 	vm_map_set_user_wire_limit(map, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
-
+	
 	/* 
 	 * Set code-signing flags if this binary is signed, or if parent has
 	 * requested them on exec.
@@ -157,7 +157,7 @@ exec_mach_imgact(struct image_params *imgp){
 	} else {
 		imgp->ip_csflags &= ~CS_VALID;
 	}
-
+	
 	if (p->p_csflags & CS_EXEC_SET_HARD)
 		imgp->ip_csflags |= CS_HARD;
 	if (p->p_csflags & CS_EXEC_SET_KILL)
@@ -166,35 +166,35 @@ exec_mach_imgact(struct image_params *imgp){
 		imgp->ip_csflags |= CS_ENFORCEMENT;
 	if (p->p_csflags & CS_EXEC_SET_INSTALLER)
 		imgp->ip_csflags |= CS_INSTALLER;
-
+	
 	/*
 	 * Set up the system reserved areas in the new address space.
 	 */
 	vm_map_exec(map, task, load_result.is64bit, (void *)p->p_fd->fd_rdir, cpu_type());
-
+	
 	/*
 	 * Close file descriptors which specify close-on-exec.
 	 */
 	fdexec(p, psa != NULL ? psa->psa_flags : 0);
-
+	
 	/*
 	 * deal with set[ug]id.
 	 */
 	error = exec_handle_sugid(imgp);
 	if (error) {
 		vm_map_deallocate(map);
-
+	
 		KERNEL_DEBUG_CONSTANT(BSDDBG_CODE(DBG_BSD_PROC, BSD_PROC_EXITREASON_CREATE) | DBG_FUNC_NONE,
 						p->p_pid, OS_REASON_EXEC, EXEC_EXIT_REASON_SUGID_FAILURE, 0, 0);
 		exec_failure_reason = os_reason_create(OS_REASON_EXEC, EXEC_EXIT_REASON_SUGID_FAILURE);
 		goto badtoolate;
 	}
-
+	
 	...
-
+	
 	//activate_exec_state()函数中主要是调用了thread_setentrypoint()函数
 	lret = activate_exec_state(task, p, thread, &load_result);
-
+	
 	...
 	...
 }
@@ -248,9 +248,9 @@ load_machfile(
 	if (macho_size > file_size) {
 		return(LOAD_BADMACHO);
 	}
-
+	
 	result->is64bit = ((imgp->ip_flags & IMGPF_IS_64BIT) == IMGPF_IS_64BIT);
-
+	
 	task_t ledger_task;
 	if (imgp->ip_new_thread) {
 		ledger_task = get_threadtask(imgp->ip_new_thread);
@@ -266,7 +266,7 @@ load_machfile(
 			0,
 			vm_compute_max_offset(result->is64bit),
 			TRUE);
-
+	
 	...
 	
 	/* Forcibly disallow execution from data pages on even if the arch
@@ -280,13 +280,13 @@ load_machfile(
 	 //计算 dyld 的随机偏移量
 	if (!(imgp->ip_flags & IMGPF_DISABLE_ASLR)) {
 		uint64_t max_slide_pages;
-
+	
 		max_slide_pages = vm_map_get_max_aslr_slide_pages(map);
 		// binary（mach-o文件）随机的ASLR
 		aslr_offset = random();
 		aslr_offset %= max_slide_pages;
 		aslr_offset <<= vm_map_page_shift(map);
-       //dyld 的 aslr 
+	   //dyld 的 aslr 
 		dyld_aslr_offset = random();
 		dyld_aslr_offset %= max_slide_pages;
 		dyld_aslr_offset <<= vm_map_page_shift(map);
@@ -294,9 +294,9 @@ load_machfile(
 	
 	if (!result)
 		result = &myresult;
-
+	
 	*result = load_result_null;
-
+	
 	/*
 	 * re-set the bitness on the load result since we cleared the load result above.
 	 */
@@ -305,12 +305,12 @@ load_machfile(
 	lret = parse_machfile(vp, map, thread, header, file_offset, macho_size,
 	                      0, (int64_t)aslr_offset, (int64_t)dyld_aslr_offset, result,
 			      NULL, imgp);
-
+	
 	if (lret != LOAD_SUCCESS) {
 		vm_map_deallocate(map);	/* will lose pmap reference too */
 		return(lret);
 	}
-
+	
 	...
 	/*
 	 * Check to see if the page zero is enforced by the map->min_offset.
@@ -322,9 +322,9 @@ load_machfile(
 			return (LOAD_BADMACHO);
 		}
 	}
-
+	
 	vm_commit_pagezero_status(map);
-
+	
 	/*
 	 * If this is an exec, then we are going to destroy the old
 	 * task, and it's correct to halt it; if it's spawn, the
@@ -443,7 +443,7 @@ parse_machfile(
 	    header->magic == MH_CIGAM_64) {
 	    	mach_header_sz = sizeof(struct mach_header_64);
 	}
-
+	
 	/*
 	 *	Break infinite recursion
 	 */
@@ -451,12 +451,12 @@ parse_machfile(
 	if (depth > 1) {
 		return(LOAD_FAILURE);
 	}
-    // depth负责parse_machfile 遍历次数（2次），
-    // 第一次是解析mach-o,
-    // 第二次 load_dylinker 会调用
-    // 此函数来进行dyld的解析
+	// depth负责parse_machfile 遍历次数（2次），
+	// 第一次是解析mach-o,
+	// 第二次 load_dylinker 会调用
+	// 此函数来进行dyld的解析
 	depth++;
-
+	
 	 //检查 CPU 类型
 	if (((cpu_type_t)(header->cputype & ~CPU_ARCH_MASK) != (cpu_type() & ~CPU_ARCH_MASK)) ||
 	    !grade_binary(header->cputype, 
@@ -471,7 +471,7 @@ parse_machfile(
 		if (depth != 1) {
 			return (LOAD_FAILURE);
 		}
-
+	
 		break;
 	case MH_DYLINKER:
 		if (depth != 2) {
@@ -483,26 +483,26 @@ parse_machfile(
 	default:
 		return (LOAD_FAILURE);
 	}
-
+	
 	/*
 	 *	Get the pager for the file.
 	 */
 	control = ubc_getobject(vp, UBC_FLAGS_NONE);
-
+	
 	/*
 	 *	Map portion that must be accessible directly into
 	 *	kernel's map.
 	 */
 	if ((off_t)(mach_header_sz + header->sizeofcmds) > macho_size)
 		return(LOAD_BADMACHO);
-
+	
 	/*
 	 *	Round size of Mach-O commands up to page boundry.
 	 */
 	size = round_page(mach_header_sz + header->sizeofcmds);
 	if (size <= 0)
 		return(LOAD_BADMACHO);
-
+	
 	/*
 	 * Map the load commands into kernel memory.
 	 */
@@ -512,7 +512,7 @@ parse_machfile(
 	addr = (caddr_t)kl_addr;
 	if (addr == NULL)
 		return(LOAD_NOSPACE);
-
+	
 	error = vn_rdwr(UIO_READ, vp, addr, size, file_offset,
 	    UIO_SYSSPACE, 0, kauth_cred_get(), &resid, p);
 	if (error) {
@@ -520,14 +520,14 @@ parse_machfile(
 			kfree(kl_addr, kl_size);
 		return(LOAD_IOERROR);
 	}
-
+	
 	if (resid) {
 		/* We must be able to read in as much as the mach_header indicated */
 		if (kl_addr)
 			kfree(kl_addr, kl_size);
 		return(LOAD_BADMACHO);
 	}
-
+	
 	/*
 	 *	For PIE and dyld, slide everything by the ASLR offset.
 	 */
@@ -535,7 +535,7 @@ parse_machfile(
 	if ((header->flags & MH_PIE) || is_dyld) {
 		slide = aslr_offset;
 	}
-
+	
 	/*
 	 *  Scan through the commands, processing each one as necessary.
 	 *  We parse in three passes through the headers:
@@ -546,15 +546,15 @@ parse_machfile(
 	 */
 	//遍历command ，处理
 	boolean_t slide_realign = FALSE;
-
+	
 	for (pass = 0; pass <= 3; pass++) {
-
+	
 		if (pass == 0 && !slide_realign && !is_dyld) {
 			/* if we dont need to realign the slide or determine dyld's load
 			 * address, pass 0 can be skipped */
 			continue;
 		} else if (pass == 1) {
-
+	
 			if (dyld_no_load_addr && binresult) {
 				/*
 				 * The dyld Mach-O does not specify a load address. Try to locate
@@ -564,7 +564,7 @@ parse_machfile(
 				slide = vm_map_round_page(slide + binresult->max_vm_addr, effective_page_mask);
 			}
 		}
-
+	
 		/*
 		 * Check that the entry point is contained in an executable segments
 		 */ 
@@ -573,7 +573,7 @@ parse_machfile(
 			ret = LOAD_FAILURE;
 			break;
 		}
-
+	
 		/*
 		 * Check that some segment maps the start of the mach-o file, which is
 		 * needed by the dynamic loader to read the mach headers, etc.
@@ -582,7 +582,7 @@ parse_machfile(
 			ret = LOAD_BADMACHO;
 			break;
 		}
-
+	
 		/*
 		 * Loop through each of the load_commands indicated by the
 		 * Mach-O header; if an absurd value is provided, we just
@@ -591,7 +591,7 @@ parse_machfile(
 		 */
 		offset = mach_header_sz;
 		ncmds = header->ncmds;
-
+	
 		while (ncmds--) {
 			/*
 			 *	Get a pointer to the command.
@@ -599,7 +599,7 @@ parse_machfile(
 			lcp = (struct load_command *)(addr + offset);
 			oldoffset = offset;
 			offset += lcp->cmdsize;
-
+	
 			/*
 			 * Perform prevalidation of the struct load_command
 			 * before we attempt to use its contents.  Invalid
@@ -614,7 +614,7 @@ parse_machfile(
 				ret = LOAD_BADMACHO;
 				break;
 			}
-
+	
 			/*
 			 * Act on struct load_command's for which kernel
 			 * intervention is required.
@@ -633,7 +633,7 @@ parse_machfile(
 				                   map,
 				                   slide,
 				                   result);
-
+	
 				if (ret == LOAD_SUCCESS && scp->fileoff == 0 && scp->filesize > 0) {
 					/* Enforce a single segment mapping offset zero, with R+X
 					 * protection. */
@@ -644,12 +644,12 @@ parse_machfile(
 					}
 					found_header_segment = TRUE;
 				}
-
+	
 				break;
 			}
 			case LC_SEGMENT_64: {
 				...
-
+	
 				ret = load_segment(lcp,
 				                   header->filetype,
 				                   control,
@@ -659,7 +659,7 @@ parse_machfile(
 				                   map,
 				                   slide,
 				                   result);
-
+	
 				if (ret == LOAD_SUCCESS && scp64->fileoff == 0 && scp64->filesize > 0) {
 					/* Enforce a single segment mapping offset zero, with R+X
 					 * protection. */
@@ -670,7 +670,7 @@ parse_machfile(
 					}
 					found_header_segment = TRUE;
 				}
-
+	
 				break;
 			}
 			case LC_UNIXTHREAD:
@@ -737,11 +737,11 @@ parse_machfile(
 					 */
 					if (!cs_enforcement(NULL))
 					    ret = LOAD_SUCCESS; /* ignore error */
-
+	
 				} else {
 					got_code_signatures = TRUE;
 				}
-
+	
 				if (got_code_signatures) {
 					unsigned tainted = CS_VALIDATE_TAINTED;
 					boolean_t valid = FALSE;
@@ -753,7 +753,7 @@ parse_machfile(
 					
 					while (off < size && ret == LOAD_SUCCESS) {
 					     tainted = CS_VALIDATE_TAINTED;
-
+	
 					     valid = cs_validate_range(vp,
 								       NULL,
 								       file_offset + off,
@@ -773,7 +773,7 @@ parse_machfile(
 					     off += PAGE_SIZE;
 					}
 				}
-
+	
 				break;
 			default:
 				/* Other commands are ignored by the kernel */
@@ -786,19 +786,19 @@ parse_machfile(
 		if (ret != LOAD_SUCCESS)
 			break;
 	}
-
+	
 	if (ret == LOAD_SUCCESS) { 
 		if (! got_code_signatures) {
 			if (cs_enforcement(NULL)) {
 				ret = LOAD_FAILURE;
 			} else {
-                               /*
-                                * No embedded signatures: look for detached by taskgated,
-                                * this is only done on OSX, on embedded platforms we expect everything
-                                * to be have embedded signatures.
-                                */
+	                           /*
+	                            * No embedded signatures: look for detached by taskgated,
+	                            * this is only done on OSX, on embedded platforms we expect everything
+	                            * to be have embedded signatures.
+	                            */
 				struct cs_blob *blob;
-
+	
 				blob = ubc_cs_blob_get(vp, -1, file_offset);
 				if (blob != NULL) {
 					unsigned int cs_flag_data = blob->csb_flags;
@@ -814,33 +814,33 @@ parse_machfile(
 				}
 			}
 		}
-
+	
 		/* Make sure if we need dyld, we got it */
 		if (result->needs_dynlinker && !dlp) {
 			ret = LOAD_FAILURE;
 		}
-
+	
 		if ((ret == LOAD_SUCCESS) && (dlp != 0)) {
 			// 第一次解析mach-o dlp会有赋值，进行dyld的加载
 			ret = load_dylinker(dlp, dlarchbits, map, thread, depth,
 					    dyld_aslr_offset, result, imgp);
 		}
-
+	
 		if ((ret == LOAD_SUCCESS) && (depth == 1)) {
 			if (result->thread_count == 0) {
 				ret = LOAD_FAILURE;
 			}
 	    }
 	}
-
+	
 	if (ret == LOAD_BADMACHO && found_xhdr) {
 		ret = LOAD_BADMACHO_UPX;
 	}
-
+	
 	if (kl_addr) {
 		kfree(kl_addr, kl_size);
 	}
-
+	
 	return(ret);
 }</code></pre>
 
@@ -852,11 +852,13 @@ parse_machfile(
 `parse_machfile` 调用  `load_dylinker` ， `load_dylinker` 内部又会调用 `parse_machfile` ，所以在 `parse_machfile` 里面需要根据 `depth` 来避免无限递归调用
 
 `load_dylinker` 里面有段代码:     
-<pre><code>\#if !(DEVELOPMENT || DEBUG)
+```swift
+#if !(DEVELOPMENT || DEBUG)
 	if (0 != strcmp(name, DEFAULT\_DYLD\_PATH)) {
 		return (LOAD_BADMACHO);
 	}
-\#endif</code></pre>
+#endif
+```
 
 `DEFAULT_DYLD_PATH` 定义为 `#define DEFAULT_DYLD_PATH "/usr/lib/dyld"`
 
